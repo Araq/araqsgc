@@ -81,7 +81,7 @@ proc shouldCollect*(): bool {.inline.} = (usedMem >= threshold)
 proc visitBlock(heap: ptr MiHeap, area: pointer, p: pointer,
                 blockSize: int, arg: pointer): bool {.cdecl.} =
   if p != nil:
-    let h = head(p)
+    let h = cast[ptr RefHeader](p)
     if h.epoch < epoch:
       # was only traced in an earlier epoch, which means it's garbage:
       let toFree = cast[ptr seq[pointer]](arg)

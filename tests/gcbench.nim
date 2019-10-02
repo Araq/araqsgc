@@ -50,6 +50,9 @@ discard """
 
 import ".." / araqsgc
 
+import allocators
+include system / ansi_c
+
 import
   strutils, times
 
@@ -58,11 +61,15 @@ type
   TNode = object
     left, right: PNode
     i, j: int
+    s: string # this means we will have a destructor
+
+var xx = 0
 
 proc newNode(L, r: PNode): PNode =
   new(result)
   result.left = L
   result.right = r
+  result.s = $xx # this definitely allocates!
 
 const
   kStretchTreeDepth = 18 # about 16Mb
@@ -180,9 +187,14 @@ proc main() =
   when not defined(m3):
     collect(0)
   printDiagnostics()
-  echo("Completed in " & $elapsed & "ms. Success!")
+  echo("Completed in " & $elapsed & "s. Success!")
 
 when defined(GC_setMaxPause):
   GC_setMaxPause 2_000
 
 main()
+let (a, de) = allocCounters()
+discard cprintf("strings: %ld %ld\n", a, de)
+# strings: 3909446 3909446
+# wrong:   3909447 1977196 # little mor than the half?!
+#           + 1 for the 'seq' that we use in the tracing mechanism
